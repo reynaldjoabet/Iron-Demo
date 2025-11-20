@@ -1,20 +1,37 @@
+import java.time.LocalDate
+
 import com.typesafe.config.ConfigFactory
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
+import io.github.iltotore.iron.constraint.string.*
 import pureconfig.*
 import pureconfig.generic.derivation.default.*
+type NonEmptyString = NonEmptyString.T
+object NonEmptyString extends RefinedType[String, Not[Blank]] {
+  def apply(value: String :| Not[Blank]): NonEmptyString = value.asInstanceOf[T]
+}
 
-opaque type NonEmptyString = String :| Not[Blank]
-opaque type DatabaseUrl = String :|
-  Match["""(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]"""]
-type PortNumber = Int :| Interval.Closed[1, 65535]
-
+type DatabaseUrl = DatabaseUrl.T
+object DatabaseUrl
+    extends RefinedType[String, Match[
+      """(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]"""
+    ]] {
+  def apply(
+      value: String :|
+        Match["""(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]"""]
+  ): DatabaseUrl = value.asInstanceOf[T]
+}
+type PortNumber = PortNumber.T
+object PortNumber extends RefinedType[Int, Interval.Closed[1, 65535]] {
+  def apply(value: Int :| Interval.Closed[1, 65535]): PortNumber = value.asInstanceOf[T]
+}
 given ConfigReader[NonEmptyString] =
-  ConfigReader.fromString[NonEmptyString](ConvertHelpers.optF(_.refineOption))
+  ConfigReader.fromString[NonEmptyString](ConvertHelpers.optF(NonEmptyString.option(_)))
 given ConfigReader[DatabaseUrl] =
-  ConfigReader.fromString[DatabaseUrl](ConvertHelpers.optF(_.refineOption))
+  ConfigReader.fromString[DatabaseUrl](ConvertHelpers.optF(DatabaseUrl.option(_)))
 given ConfigReader[PortNumber] =
-  ConfigReader.fromString[PortNumber](ConvertHelpers.optF(_.toIntOption.flatMap(_.refineOption)))
+  ConfigReader.fromString[PortNumber](ConvertHelpers.optF(port => PortNumber.option(port.toInt)))
+
 
 final case class ApiConfig(host: NonEmptyString, port: PortNumber) derives ConfigReader
 
@@ -41,7 +58,9 @@ ConfigSource.fromConfig(databaseConfig).at("database").load[DatabaseConfig]
 
 def hello(s: NonEmptyString) = 7
 
-hello("hello")
+import io.github.iltotore.iron.compileTime
+
+hello(NonEmptyString("world"))
 
 // trait Repository[F[_]]{
 
@@ -76,11 +95,12 @@ import io.github.iltotore.iron.skunk
 final class Positive
 
 given Constraint[Int, Positive] with {
-  override inline def test(value: Int): Boolean = value > 0
-  override inline def message: String           = "Should be strictly positive"
+
+  override inline def test(inline value: Int): Boolean = value > 0
+  override inline def message: String                  = "Should be strictly positive"
 }
 
-val x1: Int :| Positive = 1
+val x1: Int :| Positive = 1.refineOption[Positive].get
 
 // val y1: Int :| Positive =- 1
 
@@ -88,27 +108,22 @@ val x1: Int :| Positive = 1
 
 //constrained opaque types
 
-opaque type Positives <: Int = Int :| Greater[0] // has all the methods on Int
+type Positives1 = Positives.T
+object Positives extends RefinedType[Int, Greater[0]]
 
-opaque type Positives1 = Int :| Greater[0]
-object Positives extends RefinedTypeOps[Int, Greater[0], Positives]
+val g1: Positives1 = Positives(10)
 
-val g: Positives = 10
-
-val m: Int = g
-
-val g1: Positives1 = 10
-
-g == g1
+import io.github.iltotore.iron.compileTime.*
+//val mn: Positives1 = 89
 
 //val m1:Positives1= -10
 
 private type StatsConstraint =
   GreaterEqual[0] // & LessEqual[100000000 * 21000000]
 
-opaque type Stats <: Long = Long :| StatsConstraint
+type Stats = Stats.T
 
-object Stats extends RefinedTypeOps[Long, StatsConstraint, Stats]
+object Stats extends RefinedType[Long, StatsConstraint]
 
 100000000L * 21000000L
 
@@ -119,10 +134,10 @@ object Tag {
   private type NameConstraint = Not[Empty] & MaxLength[128]
   opaque type Name <: String  = String :| NameConstraint
 
-  object Name extends RefinedTypeOps[String, NameConstraint, Name]
+  object Name extends RefinedType[String, NameConstraint]
 
   private type ValueConstraint = Not[Empty] & MaxLength[512]
   opaque type Value <: String  = String :| ValueConstraint
 
-  object Value extends RefinedTypeOps[String, ValueConstraint, Value]
+  object Value extends RefinedType[String, ValueConstraint]
 }

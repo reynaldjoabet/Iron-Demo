@@ -1,6 +1,7 @@
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.numeric.*
 
+import io.github.iltotore.iron.constraint.numeric.Positive
 def log(x: Double :| Positive): Double =
   Math.log(x) // Used like a normal `Double`
 
@@ -65,6 +66,7 @@ object BranchCode {
 val km: BranchCode = "hello"
 
 import io.github.iltotore.iron.constraint.collection
+import io.github.iltotore.iron.constraint.collection.*
 // def createIBAN(  countryCode: String,
 //                  checkDigits: String,
 //                  bankCode: String,
@@ -89,23 +91,22 @@ import io.github.iltotore.iron.constraint.string.Match.apply
 import io.github.iltotore.iron.constraint.string.ValidURL
 import io.github.iltotore.iron.constraint.string.ValidUUID
 
-
-import io.github.iltotore.iron.constraint.collection.*
-
 object U {
-  opaque type UserName  = String :| MinLength[ 10 ]
-   object UserName extends RefinedTypeOps[ String , MinLength[ 10 ], UserName]
+  type UserName = UserName.T
+  object UserName extends RefinedType[String, MinLength[10]] {
+    def apply(value: String :| MinLength[10]): UserName = value.asInstanceOf[T]
+  }
 }
 object P {
   // creates a new type which is different from UserName
-  opaque type Password = String :| MinLength[ 10 ]
-   object Password extends RefinedTypeOps[ String , MinLength[ 10 ], Password]
+  type Password = Password.T
+  object Password extends RefinedType[String, MinLength[10]] {
+    def apply(value: String :| MinLength[10]): Password = value.asInstanceOf[T]
+  }
 }
 
-val p: P.Password = P.Password("foobar2000" ) // ok 
+val p: P.Password = P.Password("foobar2000") // ok
 //val u: U.UserName = p // does not compile!!
-
-
 
 // import cats.data.NonEmptyList
 
@@ -151,7 +152,6 @@ val p: P.Password = P.Password("foobar2000" ) // ok
 // }
 // """
 // decode[Order](json)
-
 
 // val invalidJson = """
 // {

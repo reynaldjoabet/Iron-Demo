@@ -29,7 +29,7 @@ import scala.compiletime.*
 inline def printType[T <: Tuple]: Unit =
   println(constValue[Tuple.Size[T]]) // Evaluates at compile time
 
-  printType[EmptyTuple]
+printType[EmptyTuple]
 
 3
 printType[2 *: EmptyTuple]

@@ -64,3 +64,33 @@ Example for `−3`(8-bit):
 [scala/iron](https://blog.michal.pawlik.dev/posts/scala/iron/)
 
 [Let the compiler do the value validation: Iron looks like a good library for refinement types in Scala 3](https://blog.3qe.us/entry/2024/02/19/040745)
+
+
+## Refined type definition
+
+Many changes related to `RefinedTypeOps` definition have been introduced to provide better ergonomy.
+
+In 2.x:
+
+```scala
+opaque type Temperature = Double :| Positive
+object Temperature extends RefinedTypeOps[Double, Positive, Temperature]
+```
+
+In 3.x:
+
+```scala
+type Temperature = Temperature.T
+object Temperature extends RefinedType[Double, Positive]
+```
+
+- `RefinedTypeOps` is now `RefinedType`
+- All newtypes are opaque, you can no longer make transparent types
+
+You also no longer need to duplicate the constraint type, therefore, the following pattern is obsolete:
+
+```scala
+type TemperatureR = DescribedAs[Positive, "Temperature should be positive"]
+opaque type Temperature = Double :| TemperatureR
+object Temperature extends RefinedTypeOps[Double, TemperatureR, Temperature]
+```

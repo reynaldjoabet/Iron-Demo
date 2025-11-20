@@ -11,12 +11,13 @@ ThisBuild / scalacOptions ++= Seq(
   "-unchecked"
 )
 
-val ironVersion = "2.6.0"
+val ironVersion = "3.2.1"
 
 def iron(artifact: String): ModuleID =
   "io.github.iltotore" %% s"iron-$artifact" % ironVersion
 
-val ironSkunk = iron("skunk")
+val ironScalaCheck = iron("scalacheck") % Test
+val ironSkunk      = iron("skunk")
 
 val ironPureconfig = iron("pureconfig")
 
@@ -44,7 +45,9 @@ libraryDependencies ++= Seq(
   ironCirce,
   ironDoobie,
   ironSkunk,
-  // ironPureconfig,
-  pureconfig,
+  ironPureconfig,
+  // pureconfig,
   cats
 )
+
+onChangedBuildSource := ReloadOnSourceChanges

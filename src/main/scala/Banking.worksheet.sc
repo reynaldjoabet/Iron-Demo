@@ -22,11 +22,11 @@ case class Customer(id: String, name: String)
 // Define a case class for Account
 //case class Account(id: String, customer: Customer, accountType: AccountType, balance: BigDecimal)
 case class Account(
-  id: String,
-  customer: Customer,
-  accountType: AccountType,
-  balance: BigDecimal,
-  cards: List[Card] = List()  // Default empty list of cards
+    id: String,
+    customer: Customer,
+    accountType: AccountType,
+    balance: BigDecimal,
+    cards: List[Card] = List() // Default empty list of cards
 )
 
 // Define a sealed trait and case classes for Transaction
@@ -63,7 +63,7 @@ object BankService {
       val updatedToAccount = deposit(toAccount, amount)
       (updatedFromAccount, updatedToAccount)
     }
-def addCard(account: Account, card: Card): Account =
+  def addCard(account: Account, card: Card): Account =
     account.copy(cards = card :: account.cards)
 }
 import BankService.*
@@ -91,7 +91,6 @@ BankService.transfer(updatedAccount1, account2, BigDecimal(300)) match {
     println(s"Updated balance of toAccount: ${toAccount.balance}")
   case Left(error) => println(s"Error: $error")
 }
-
 
 // Create a new card
 val newCard = Card(
